@@ -527,6 +527,40 @@ input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
   .toast{bottom:calc(86px + env(safe-area-inset-bottom));max-width:90vw;text-align:center}
 }
 </style>
+<style>
+.cong{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;
+  background:var(--bg-base);background-image:radial-gradient(circle at 20% 15%,rgba(37,99,235,.14),transparent 45%),radial-gradient(circle at 85% 85%,rgba(var(--accent-rgb),.12),transparent 45%)}
+.cong-the{width:100%;max-width:400px;text-align:center;padding:36px 28px;border-radius:24px;background:var(--glass-strong,#fff);
+  border:1px solid var(--edge,rgba(0,0,0,.08));box-shadow:0 20px 60px rgba(15,23,42,.12)}
+.cong-logo{width:60px;height:60px;margin:0 auto 14px;border-radius:18px;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:1.25rem;color:#fff;background:linear-gradient(135deg,#3B82F6,#2563EB);box-shadow:0 10px 24px rgba(37,99,235,.35)}
+.cong-the h2{margin:0;font-size:1.35rem}
+.cong-phu{margin:4px 0 22px;color:var(--muted);font-size:.9rem}
+.cong-tt{margin:8px 0;line-height:1.55}
+.cong-nho{margin:10px 0;color:var(--muted);font-size:.84rem;line-height:1.5}
+.cong-loi{margin:10px 0;color:var(--bad);font-size:.88rem}
+.cong-nut-g{display:flex;justify-content:center;min-height:46px;margin:14px 0 6px}
+.cong-ic{font-size:2rem;margin-bottom:4px}
+.cong-nut-chinh{margin-top:14px;width:100%;padding:11px;border:0;border-radius:12px;background:#2563EB;color:#fff;font:inherit;font-weight:600;cursor:pointer}
+.cong-phu-nut{margin-top:10px;width:100%;padding:10px;border:1px solid var(--stroke,rgba(0,0,0,.12));border-radius:12px;background:transparent;color:var(--text);font:inherit;cursor:pointer}
+.cong-xoay{width:30px;height:30px;margin:10px auto;border:3px solid rgba(37,99,235,.18);border-top-color:#2563EB;border-radius:50%;animation:cong-q .8s linear infinite}
+.cong-xoay.nho{width:22px;height:22px}
+@keyframes cong-q{to{transform:rotate(360deg)}}
+.tk-nut{position:relative;padding:0;overflow:visible}
+.tk-nut img,.tk-nut span{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;object-fit:cover;
+  background:#2563EB;color:#fff;font-weight:700}
+.tk-so{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;
+  font-size:.68rem;font-style:normal;font-weight:700;line-height:18px}
+.tk-nen{position:fixed;inset:0;z-index:9000;background:rgba(15,23,42,.35);display:flex;align-items:flex-start;justify-content:center;padding:70px 16px 16px;overflow:auto}
+.tk-hop{width:100%;max-width:640px;background:var(--glass-strong,#fff);border:1px solid var(--edge,rgba(0,0,0,.08));border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(15,23,42,.2)}
+.tk-dau{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tk-mo{color:var(--muted);font-size:.82rem;margin-top:2px;word-break:break-all}
+.tk-h{margin:20px 0 8px;font-size:1rem}
+.tk-dong{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--stroke,rgba(0,0,0,.08))}
+.tk-tt{flex:1 1 200px;min-width:0}
+.tk-nuts{display:flex;gap:6px;flex-wrap:wrap}
+.tk-do{color:var(--bad)!important}
+</style>
 </head>
 <body>
 <div class="blobs"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i></div>
@@ -604,17 +638,30 @@ var API_URL='https://script.google.com/macros/s/AKfycbwYFuVOGRXvkLL-YhWXplqlgsRT
 var CO_GAS=!!(typeof google!=='undefined'&&google.script&&google.script.run);
 /* Chỉ hiện dữ liệu mẫu khi thêm ?demo=1 vào link, hoặc khi không có cả Apps Script lẫn API_URL. */
 var THU=/[?&]demo=1\b/.test(location.search)||(!CO_GAS&&!API_URL);
+/* ĐĂNG NHẬP GOOGLE: dán Client ID (giống GOOGLE_CLIENT_ID trong Code.gs). Để trống = dùng mã PIN như cũ. */
+var GOOGLE_CLIENT_ID='';
+var CAN_DANG_NHAP=!CO_GAS&&!THU&&!!GOOGLE_CLIENT_ID;
+var ND=null, DA_BAT_DAU=false;
+function layToken(){
+  try{ var t=localStorage.getItem('bdh_tok')||''; if(!t) return '';
+    var p=JSON.parse(decodeURIComponent(escape(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))));
+    if(!p.exp||p.exp*1000<Date.now()+60000){ localStorage.removeItem('bdh_tok'); return ''; }
+    return t; }catch(e){ return ''; }
+}
+function luuToken(t){ try{ if(t) localStorage.setItem('bdh_tok',t); else localStorage.removeItem('bdh_tok'); }catch(e){} }
 function layPin(){ try{ return localStorage.getItem('bdh_pin')||''; }catch(e){ return ''; } }
 function luuPin(p){ try{ if(p) localStorage.setItem('bdh_pin',p); else localStorage.removeItem('bdh_pin'); }catch(e){} }
 function goiApi(ten,args,lan){
   lan=lan||0;
   return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({fn:ten,args:args,pin:layPin()})})
+      body:JSON.stringify({fn:ten,args:args,pin:layPin(),token:CAN_DANG_NHAP?layToken():''})})
     .catch(function(){ throw new Error('Không kết nối được Apps Script. Kiểm tra: Triển khai với quyền "Bất kỳ ai" và đã tạo Phiên bản mới sau khi dán Code.gs.'); })
     .then(function(r){ if(!r.ok) throw new Error('Apps Script trả lỗi '+r.status+'.'); return r.text(); })
     .then(function(t){
       var j; try{ j=JSON.parse(t); }catch(e){
         throw new Error('Apps Script chưa trả dữ liệu đúng dạng. Hãy dán Code.gs mới (có hàm doPost), rồi Triển khai → Phiên bản mới, quyền "Bất kỳ ai".'); }
+      if(j&&j.canDangNhap){ luuToken(''); ND=null; moCong('dangnhap',j.loi); throw new Error(j.loi||'Cần đăng nhập Google.'); }
+      if(j&&j.canDuyet){ moCong(j.trangThai==='Từ chối'?'tuchoi':'cho'); throw new Error('Tài khoản '+j.email+' chưa được duyệt.'); }
       if(j&&j.canPin){
         if(lan>=3){ luuPin(''); throw new Error('Sai mã PIN quá 3 lần. Bấm Làm mới để thử lại.'); }
         var p=window.prompt(j.loi||'Nhập mã PIN:','');
@@ -820,6 +867,113 @@ var BC={ky:'nam'};
 var CT=null, SUA=false, BAO='', CHE='', TH={soPhieu:'…',khSua:false,hanSua:false};
 var CHAT=[], CHAT_DANG=false, URL_APP='';
 
+/* ============================================================ ĐĂNG NHẬP GOOGLE & DUYỆT */
+var GIS_SAN=false;
+function khoiGIS(cb){
+  if(GIS_SAN){ cb(); return; }
+  var s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true;
+  s.onload=function(){
+    google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,auto_select:true,cancel_on_tap_outside:false,
+      callback:function(r){ luuToken(r.credential); kiemTraDangNhap(); }});
+    GIS_SAN=true; cb();
+  };
+  s.onerror=function(){ var n=document.getElementById('cong-nut'); if(n) n.innerHTML='<div class="cong-loi">Không tải được dịch vụ đăng nhập Google. Kiểm tra mạng rồi tải lại trang.</div>'; };
+  document.head.appendChild(s);
+}
+function moCong(trangThai,thongDiep){
+  var c=document.getElementById('cong');
+  if(!c){ document.body.insertAdjacentHTML('beforeend','<div id="cong" class="cong"><div class="cong-the">'
+    +'<div class="cong-logo">HT</div><h2>Phòng Hạ tầng</h2><p class="cong-phu">UBND xã Đông Thạnh · Bảng điều hành công việc</p>'
+    +'<div id="cong-noi"></div></div></div>'); c=document.getElementById('cong'); }
+  c.style.display='flex';
+  var n=document.getElementById('cong-noi'), em=ND&&ND.email?'<b>'+esc(ND.email)+'</b>':'tài khoản của bạn';
+  var nutRa='<button class="cong-phu-nut" onclick="dangXuat()">Đăng nhập tài khoản khác</button>';
+  if(trangThai==='dang'){ n.innerHTML='<div class="cong-xoay"></div><p class="cong-tt">Đang kiểm tra tài khoản…</p>'; return; }
+  if(trangThai==='cho'){
+    n.innerHTML='<div class="cong-ic cho">⏳</div><p class="cong-tt">'+em+' đã đăng ký và <b>đang chờ quản trị viên duyệt</b>.</p>'
+      +'<p class="cong-nho">Khi được duyệt, bấm “Kiểm tra lại” để vào.</p>'
+      +'<button class="cong-nut-chinh" onclick="kiemTraDangNhap()">Kiểm tra lại</button>'+nutRa; return; }
+  if(trangThai==='tuchoi'){
+    n.innerHTML='<div class="cong-ic tc">⛔</div><p class="cong-tt">'+em+' <b>không được cấp quyền</b> truy cập.</p>'
+      +'<p class="cong-nho">Liên hệ quản trị viên Phòng Hạ tầng nếu cần.</p>'+nutRa; return; }
+  n.innerHTML=(thongDiep?'<p class="cong-nho">'+esc(thongDiep)+'</p>':'<p class="cong-tt">Đăng nhập bằng tài khoản Google để tiếp tục.</p>')
+    +'<div id="cong-nut" class="cong-nut-g"><div class="cong-xoay nho"></div></div>'
+    +'<p class="cong-nho">Lần đầu đăng nhập, tài khoản cần được quản trị viên duyệt.</p>';
+  khoiGIS(function(){
+    var el=document.getElementById('cong-nut'); if(!el) return; el.innerHTML='';
+    google.accounts.id.renderButton(el,{theme:'filled_blue',size:'large',shape:'pill',text:'signin_with',locale:'vi',width:280});
+    if(!thongDiep) google.accounts.id.prompt();
+  });
+}
+function dongCong(){ var c=document.getElementById('cong'); if(c) c.style.display='none'; }
+function kiemTraDangNhap(){
+  if(!layToken()){ moCong('dangnhap'); return; }
+  moCong('dang');
+  goiApi('dangNhap',[]).then(function(nd){
+    ND=nd||null;
+    if(!ND){ moCong('dangnhap','Không đọc được thông tin tài khoản.'); return; }
+    if(ND.trangThai==='Đã duyệt'){ dongCong(); veNutTK(); batDau(); }
+    else moCong(ND.trangThai==='Từ chối'?'tuchoi':'cho');
+  }).catch(function(e){
+    var c=document.getElementById('cong');
+    if(!c||c.style.display==='none'||document.getElementById('cong-noi').querySelector('.cong-xoay'))
+      moCong('dangnhap',e.message||String(e));
+  });
+}
+function dangXuat(){
+  luuToken(''); ND=null;
+  try{ google.accounts.id.disableAutoSelect(); }catch(e){}
+  var m=document.getElementById('tk-modal'); if(m) m.remove();
+  var b=document.getElementById('nut-tk'); if(b) b.remove();
+  moCong('dangnhap','Đã đăng xuất.');
+}
+function veNutTK(){
+  if(!ND) return;
+  var b=document.getElementById('nut-tk');
+  if(!b){ b=document.createElement('button'); b.id='nut-tk'; b.className='ib tk-nut'; b.onclick=moTK;
+    var them=document.getElementById('nut-them'); them.parentNode.insertBefore(b,them); }
+  var chu=(ND.ten||ND.email||'?').trim().charAt(0).toUpperCase();
+  b.setAttribute('data-tip',ND.email+' · quyền '+ND.quyen);
+  b.innerHTML=(ND.anh?'<img src="'+esc(ND.anh)+'" alt="" referrerpolicy="no-referrer">':'<span>'+esc(chu)+'</span>')
+    +(ND.laQuanTri&&ND.soChoDuyet?'<i class="tk-so">'+ND.soChoDuyet+'</i>':'');
+}
+function moTK(){
+  var m=document.getElementById('tk-modal'); if(m) m.remove();
+  document.body.insertAdjacentHTML('beforeend','<div id="tk-modal" class="tk-nen" onclick="if(event.target===this)this.remove()">'
+    +'<div class="tk-hop"><div class="tk-dau"><div><b>'+esc(ND.ten||ND.email)+'</b><div class="tk-mo">'+esc(ND.email)+' · quyền <b>'+esc(ND.quyen)+'</b>'
+    +(ND.laQuanTri?' · quản trị viên':'')+'</div></div>'
+    +'<button class="btn ghost sm" onclick="dangXuat()">Đăng xuất</button></div>'
+    +(ND.laQuanTri?'<h3 class="tk-h">Người dùng</h3><div id="tk-ds"><div class="cong-xoay nho"></div></div>':'')
+    +'</div></div>');
+  if(ND.laQuanTri) taiDsND();
+}
+function taiDsND(){ goiApi('dsNguoiDung',[]).then(veDsND).catch(function(e){ var d=document.getElementById('tk-ds'); if(d) d.innerHTML='<div class="cong-loi">'+esc(e.message||e)+'</div>'; }); }
+function veDsND(ds){
+  var d=document.getElementById('tk-ds'); if(!d) return;
+  ND.soChoDuyet=ds.filter(function(x){return x.trangThai==='Chờ duyệt';}).length; veNutTK();
+  if(!ds.length){ d.innerHTML='<p class="tk-mo">Chưa có ai đăng ký.</p>'; return; }
+  d.innerHTML=ds.map(function(x){
+    var tag=x.trangThai==='Đã duyệt'?'g-ok':x.trangThai==='Từ chối'?'g-bad':'g-warn';
+    var nut='';
+    if(!x.laQuanTri){
+      var e="'"+x.email.replace(/'/g,"\\'")+"'";
+      if(x.trangThai!=='Đã duyệt') nut+='<button class="btn sm" onclick="doiND('+e+',\'Đã duyệt\',\'Xem\')">Duyệt · Xem</button>'
+        +'<button class="btn sm" onclick="doiND('+e+',\'Đã duyệt\',\'Sửa\')">Duyệt · Sửa</button>';
+      else nut+='<button class="btn ghost sm" onclick="doiND('+e+',\'Đã duyệt\',\''+(x.quyen==='Sửa'?'Xem':'Sửa')+'\')">'+(x.quyen==='Sửa'?'Chỉ cho xem':'Cho sửa')+'</button>';
+      if(x.trangThai!=='Từ chối') nut+='<button class="btn ghost sm tk-do" onclick="doiND('+e+',\'Từ chối\',\'Xem\')">'+(x.trangThai==='Đã duyệt'?'Thu hồi':'Từ chối')+'</button>';
+    }
+    return '<div class="tk-dong"><div class="tk-tt"><b>'+esc(x.ten||x.email)+'</b><div class="tk-mo">'+esc(x.email)
+      +(x.lanCuoi?' · vào lúc '+esc(x.lanCuoi):'')+'</div></div>'
+      +'<span class="g '+tag+'">'+esc(x.trangThai)+(x.trangThai==='Đã duyệt'?' · '+esc(x.quyen):'')+'</span>'
+      +'<div class="tk-nuts">'+(x.laQuanTri?'<span class="tk-mo">Quản trị</span>':nut)+'</div></div>';
+  }).join('');
+}
+function doiND(email,tt,q){
+  var d=document.getElementById('tk-ds'); if(d) d.style.opacity='.5';
+  goiApi('capNhatNguoiDung',[email,tt,q]).then(function(ds){ if(d) d.style.opacity=''; veDsND(ds); toast('Đã cập nhật '+email); })
+    .catch(function(e){ if(d) d.style.opacity=''; toast(e.message||String(e),1); });
+}
+
 /* ======================================================================= KHỞI ĐỘNG */
 function $(s){return document.querySelector(s);}
 (function(){
@@ -829,9 +983,14 @@ function $(s){return document.querySelector(s);}
   $('#nut-them').innerHTML=ico('plus')+'<span>Thêm hồ sơ</span>'; $('#nut-dong').innerHTML=ico('x');
   $('#doc-back').innerHTML=ico('back'); $('#doc-drive').innerHTML=ico('ext');
   if(THU) $('#thu-banner').style.display='';
-  veNav(); khungTai(); taiNam(NAM,false);
-  goi('layUrlApp').then(function(u){ if(u){ URL_APP=u; var a=$('#link-mobile'); a.href=u+'?v=m'; a.style.display=''; } }).catch(function(){});
+  veNav(); khungTai();
+  if(CAN_DANG_NHAP) kiemTraDangNhap(); else batDau();
 })();
+function batDau(){
+  if(DA_BAT_DAU){ taiNam(NAM,false); return; }
+  DA_BAT_DAU=true; taiNam(NAM,false);
+  goi('layUrlApp').then(function(u){ if(u){ URL_APP=u; var a=$('#link-mobile'); a.href=u+'?v=m'; a.style.display=''; } }).catch(function(){});
+}
 
 function taiNam(nam,boQua){
   return goi(boQua?'lamMoi':'layDuLieu',nam,false).then(nhan).catch(loi);
