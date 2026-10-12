@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Đổi tên hiển thị trên tab trình duyệt / màn hình điện thoại ở 2 dòng dưới -->
+  <title>Phòng Hạ tầng</title>
+  <meta name="apple-mobile-web-app-title" content="Phòng Hạ tầng">
+  <meta name="theme-color" content="#1a73e8">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #ffffff;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    #app {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    #loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      color: #5f6368;
+      font-size: 15px;
+      background: #ffffff;
+      transition: opacity .3s;
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #e0e0e0;
+      border-top-color: #1a73e8;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #fallback {
+      display: none;
+      margin-top: 8px;
+    }
+    #fallback a {
+      color: #1a73e8;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="spinner"></div>
+    <div>Đang tải ứng dụng…</div>
+    <div id="fallback">Tải lâu? <a id="direct" target="_top">Mở trực tiếp</a></div>
+  </div>
+
+  <iframe id="app" title="Ứng dụng" allow="clipboard-write; geolocation"></iframe>
+
+  <script>
+    // Link Apps Script (/exec). Khi tạo phiên bản triển khai mới mà link không đổi thì không cần sửa.
+    var APP_URL = "https://script.google.com/macros/s/AKfycbyOeQX7dh_wQs-cBB-NGqaT5Cq5f9zDGx7bifFplt6bRNwz82s447Vjxq53SyhZSl7y/exec";
+
+    var frame = document.getElementById("app");
+    var loading = document.getElementById("loading");
+    document.getElementById("direct").href = APP_URL;
+
+    frame.addEventListener("load", function () {
+      loading.style.opacity = "0";
+      setTimeout(function () { loading.style.display = "none"; }, 300);
+    });
+    setTimeout(function () {
+      document.getElementById("fallback").style.display = "block";
+    }, 8000);
+
+    // Chuyển tiếp tham số trên link (vd ?trang=lich) sang Apps Script
+    frame.src = APP_URL + window.location.search;
+  </script>
+</body>
+</html>
