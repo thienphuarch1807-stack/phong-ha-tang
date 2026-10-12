@@ -1,16 +1,15 @@
 /**
  * ===========================================================================
  *  BẢNG ĐIỀU HÀNH CÔNG VIỆC — PHÒNG HẠ TẦNG, UBND XÃ ĐÔNG THẠNH
- *  Code.gs  —  phiên bản 1.2 (điện thoại + máy tính, một file Index)
+ *  Code.gs  —  phiên bản 1.1 (điện thoại + máy tính)
  * ===========================================================================
  *
  *  FILE NÀY THAY THẾ TOÀN BỘ Code.gs CŨ. Xoá hết nội dung Code.gs rồi dán vào.
  *
- *  Dự án Apps Script cần có:
+ *  Dự án Apps Script cần có đủ 3 file:
  *     Code.gs          ← file này
- *     Index            ← giao diện mới, tự co giãn máy tính + điện thoại (HTML)
- *     Index_Mobile     ← (tuỳ chọn) bản điện thoại cũ, mở bằng ?v=m
- *  Nếu chưa có file Index, script tự dùng Index_Desktop như trước.
+ *     Index_Mobile     ← giao diện điện thoại (HTML)
+ *     Index_Desktop    ← giao diện máy tính (HTML)
  *
  *  Sau khi dán: Triển khai → Quản lý triển khai → bút chì → Phiên bản mới → Triển khai.
  *
@@ -285,32 +284,21 @@ function moBangTinhDuLieu() {
 /* ================================================================ WEB APP */
 
 /**
- * Giao diện mới (file Index — kính mờ, tự co giãn máy tính và điện thoại) là mặc định.
- * Nếu dự án chưa có file Index thì dùng Index_Desktop.
+ * Giao diện mới (kính mờ, tự co giãn cho máy tính và điện thoại) là mặc định.
  * Thêm ?v=m vào cuối link để mở bản điện thoại cũ (Index_Mobile).
  */
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var v = String(p.v || '').toLowerCase();
   var cu = ['m', 'mobile', 'cu', 'old'].indexOf(v) !== -1;
-  var dsFile = cu ? ['Index_Mobile', 'Index'] : ['Index', 'Index_Desktop'];
-  var tpl = null, loiCuoi = null;
-  for (var i = 0; i < dsFile.length && !tpl; i++) {
-    try { tpl = HtmlService.createTemplateFromFile(dsFile[i]); }
-    catch (err) { loiCuoi = err; }
-  }
-  if (!tpl) {
-    return HtmlService.createHtmlOutput('<p style="font-family:Arial;padding:20px">Dự án chưa có file giao diện '
-      + '<b>Index</b>. Hãy tạo file HTML tên Index rồi triển khai phiên bản mới.<br><small>'
-      + (loiCuoi ? loiCuoi.message : '') + '</small></p>');
-  }
-  return tpl.evaluate()
+  return HtmlService.createTemplateFromFile(cu ? 'Index_Mobile' : 'Index_Desktop')
+    .evaluate()
     .setTitle('Phòng Hạ tầng — UBND xã Đông Thạnh')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-/** Link gốc của ứng dụng — giao diện mới dùng để hiện nút "Giao diện đơn giản". */
+/** Link gốc của ứng dụng — bản máy tính dùng để hiện nút "Bản điện thoại". */
 function layUrlApp() {
   return ScriptApp.getService().getUrl();
 }
