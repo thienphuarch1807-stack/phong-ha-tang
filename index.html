@@ -599,11 +599,37 @@ var I={
 function ico(p,w){return '<svg viewBox="0 0 24 24" width="'+(w||19)+'" height="'+(w||19)+'" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="'+(I[p]||p)+'"/></svg>';}
 
 /* ============================================================ KẾT NỐI MÁY CHỦ */
-var THU=!(typeof google!=='undefined'&&google.script&&google.script.run);
+/* Link triển khai Apps Script (/exec). Trang chạy ngoài Google (GitHub Pages...) sẽ gọi link này để lấy dữ liệu thật. */
+var API_URL='https://script.google.com/macros/s/AKfycbyOeQX7dh_wQs-cBB-NGqaT5Cq5f9zDGx7bifFplt6bRNwz82s447Vjxq53SyhZSl7y/exec';
+var CO_GAS=!!(typeof google!=='undefined'&&google.script&&google.script.run);
+/* Chỉ hiện dữ liệu mẫu khi thêm ?demo=1 vào link, hoặc khi không có cả Apps Script lẫn API_URL. */
+var THU=/[?&]demo=1\b/.test(location.search)||(!CO_GAS&&!API_URL);
+function layPin(){ try{ return localStorage.getItem('bdh_pin')||''; }catch(e){ return ''; } }
+function luuPin(p){ try{ if(p) localStorage.setItem('bdh_pin',p); else localStorage.removeItem('bdh_pin'); }catch(e){} }
+function goiApi(ten,args,lan){
+  lan=lan||0;
+  return fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({fn:ten,args:args,pin:layPin()})})
+    .catch(function(){ throw new Error('Không kết nối được Apps Script. Kiểm tra: Triển khai với quyền "Bất kỳ ai" và đã tạo Phiên bản mới sau khi dán Code.gs.'); })
+    .then(function(r){ if(!r.ok) throw new Error('Apps Script trả lỗi '+r.status+'.'); return r.text(); })
+    .then(function(t){
+      var j; try{ j=JSON.parse(t); }catch(e){
+        throw new Error('Apps Script chưa trả dữ liệu đúng dạng. Hãy dán Code.gs mới (có hàm doPost), rồi Triển khai → Phiên bản mới, quyền "Bất kỳ ai".'); }
+      if(j&&j.canPin){
+        if(lan>=3){ luuPin(''); throw new Error('Sai mã PIN quá 3 lần. Bấm Làm mới để thử lại.'); }
+        var p=window.prompt(j.loi||'Nhập mã PIN:','');
+        if(p===null) throw new Error('Cần mã PIN để xem dữ liệu. Bấm Làm mới để nhập lại.');
+        luuPin(String(p).trim()); return goiApi(ten,args,lan+1);
+      }
+      if(j&&j.apiLoi) throw new Error(j.apiLoi);
+      return j?j.kq:null;
+    });
+}
 function goi(ten){
   var args=[].slice.call(arguments,1);
   return new Promise(function(ok,er){
     if(THU){ setTimeout(function(){ try{ ok(GIA[ten].apply(null,args)); }catch(e){ er(e); } },220); return; }
+    if(!CO_GAS){ goiApi(ten,args).then(ok,er); return; }
     var r=google.script.run.withSuccessHandler(ok).withFailureHandler(er);
     if(typeof r[ten]!=='function'){
       er(new Error('Code.gs chưa có hàm "'+ten+'". Hãy dán đè TOÀN BỘ file Code.gs mới (không chỉ đoạn doGet), '
